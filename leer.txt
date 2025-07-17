@@ -1,0 +1,166 @@
+¡Excelente decisión! Vercel es una plataforma fantástica para desplegar aplicaciones de frontend como la tuya. Es moderna, rapidísima y su integración con GitHub hace que el proceso sea casi mágico.
+
+Aquí tienes el tutorial completo, paso a paso, para llevar tu aplicación "Luz y Verdad" desde tu código actual a un sitio web público y funcional en Vercel.
+
+### El Contexto: ¿Por qué necesitamos un "paso de compilación"?
+
+Tu aplicación está escrita en .tsx (TypeScript/React), un lenguaje que los navegadores no entienden directamente. Actualmente, un `importmap` en tu HTML le dice al navegador dónde encontrar las librerías, pero para un despliegue profesional (en "producción"), necesitamos un proceso más robusto y optimizado.
+
+Usaremos una herramienta llamada **Vite**. Vite tomará todo tu código .tsx, tus componentes, y los "compilará" y empaquetará en archivos HTML, CSS y JavaScript estáticos y súper optimizados. Esto es lo que subiremos a Vercel.
+
+¡No te preocupes, es más sencillo de lo que suena! Vamos a ello.
+
+---
+
+### Tutorial: Desplegar tu App React en Vercel
+
+#### **Paso 0: Prerrequisitos**
+
+1.  **Node.js y npm:** Asegúrate de tenerlos instalados. Puedes verificar abriendo una terminal y escribiendo `node -v` y `npm -v`. Si no los tienes, descárgalos desde [nodejs.org](https://nodejs.org/).
+2.  **Cuenta de GitHub:** Necesitarás una cuenta gratuita en [GitHub](https://github.com/).
+3.  **Cuenta de Vercel:** Crea una cuenta gratuita en [Vercel](https://vercel.com/signup), te recomiendo registrarte usando tu cuenta de GitHub para que la integración sea más fácil.
+
+#### **Paso 1: Preparar tu Proyecto para la Compilación con Vite**
+
+Vamos a reestructurar tu proyecto para usar Vite. Abre una terminal en la carpeta raíz de tu aplicación.
+
+1.  **Inicializa tu proyecto con npm:** Si no tienes un archivo `package.json`, créalo con este comando. Si ya lo tienes, puedes omitir este paso.
+    ```bash
+    npm init -y
+    ```
+
+2.  **Instala las dependencias necesarias:** Vite, el plugin de React y las librerías que ya usas.
+    ```bash
+    npm install react react-dom @google/genai
+    npm install --save-dev vite @vitejs/plugin-react typescript @types/react @types/react-dom
+    ```
+    *   `react`, `react-dom`, `@google/genai` son las librerías de tu app.
+    *   `vite`, `@vitejs/plugin-react` y los `@types` son herramientas de desarrollo (no se incluirán en el paquete final), por eso se instalan con `--save-dev`.
+
+3.  **Crea el archivo de configuración de Vite:** En la raíz de tu proyecto, crea un nuevo archivo llamado `vite.config.ts` y añade el siguiente contenido:
+    ```typescript
+    import { defineConfig } from 'vite'
+    import react from '@vitejs/plugin-react'
+
+    // https://vitejs.dev/config/
+    export default defineConfig({
+      plugins: [react()],
+    })
+    ```
+
+4.  **Crea el archivo `tsconfig.json`:** Vite necesita este archivo para entender TypeScript. Crea un archivo `tsconfig.json` en la raíz con este contenido estándar:
+    ```json
+    {
+      "compilerOptions": {
+        "target": "ES2020",
+        "useDefineForClassFields": true,
+        "lib": ["ES2020", "DOM", "DOM.Iterable"],
+        "module": "ESNext",
+        "skipLibCheck": true,
+        "moduleResolution": "bundler",
+        "allowImportingTsExtensions": true,
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "noEmit": true,
+        "jsx": "react-jsx",
+        "strict": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "noFallthroughCasesInSwitch": true
+      },
+      "include": ["index.tsx", "types.ts", "App.tsx", "components", "services", "vite.config.ts"],
+      "references": [{ "path": "./tsconfig.node.json" }]
+    }
+    ```
+    Y también un archivo `tsconfig.node.json`:
+    ```json
+    {
+      "compilerOptions": {
+        "composite": true,
+        "skipLibCheck": true,
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "allowSyntheticDefaultImports": true
+      },
+      "include": ["vite.config.ts"]
+    }
+    ```
+
+5.  **Añade los "scripts" a `package.json`:** Abre tu archivo `package.json`. Busca la sección `"scripts"` y modifícala para que se vea así. Esto le dice a `npm` cómo ejecutar, compilar y previsualizar tu app.
+    ```json
+    "scripts": {
+      "dev": "vite",
+      "build": "vite build",
+      "preview": "vite preview"
+    },
+    ```
+
+6.  **Ajusta tu `index.html`:** Este es un paso clave. Vite se encarga ahora de las dependencias, así que podemos simplificar el `index.html`.
+    *   **Mueve el script principal:** La línea `<script type="module" src="/index.tsx"></script>` debe estar dentro de la etiqueta `<body>`.
+    *   **Elimina el `importmap`:** Ya no es necesario, Vite lo gestiona.
+    *   Tu `index.html` debería quedar así:
+
+    ```html
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Luz y Verdad</title>
+      <script src="https://cdn.tailwindcss.com"></script>
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
+      <style>
+        /* ... tus estilos personalizados se mantienen igual ... */
+      </style>
+    </head>
+    <body class="bg-slate-50">
+      <div id="root"></div>
+      <script type="module" src="/index.tsx"></script>
+    </body>
+    </html>
+    ```
+
+7.  **Verifica localmente:** ¡Prueba que todo funcione!
+    *   Ejecuta `npm run dev` en tu terminal. Deberías poder ver tu app funcionando en una dirección como `http://localhost:5173`.
+    *   Luego, detén el servidor (con `Ctrl + C`) y ejecuta `npm run build`. Esto creará una carpeta `dist` con los archivos optimizados. Si este comando termina sin errores, ¡estás listo para el siguiente paso!
+
+#### **Paso 2: Subir tu Proyecto a GitHub**
+
+1.  **Crea un repositorio:** Ve a [GitHub](https://github.com/new) y crea un nuevo repositorio. Puedes llamarlo "luz-y-verdad-app". Mantenlo público.
+2.  **Conecta y sube tu código:** En tu terminal, ejecuta los siguientes comandos. Reemplaza `TU_USUARIO/TU_REPO.git` con la URL que te proporciona GitHub.
+    ```bash
+    git init
+    git add .
+    git commit -m "Initial commit: Setup project for Vercel deployment"
+    git branch -M main
+    git remote add origin https://github.com/TU_USUARIO/TU_REPO.git
+    git push -u origin main
+    ```
+
+#### **Paso 3: Desplegar en Vercel**
+
+¡La parte más emocionante y fácil!
+
+1.  **Inicia sesión en Vercel:** Ve a tu [Dashboard de Vercel](https://vercel.com/dashboard).
+2.  **Importa el proyecto:**
+    *   Haz clic en **"Add New..."** y selecciona **"Project"**.
+    *   Busca y selecciona el repositorio de GitHub que acabas de crear (`luz-y-verdad-app`). Haz clic en **"Import"**.
+3.  **Configura el proyecto:**
+    *   **Framework Preset:** Vercel es muy inteligente y debería detectar automáticamente que es un proyecto de **Vite**. ¡No deberías tener que cambiar nada aquí!
+    *   **Build and Output Settings:** Deberían estar pre-configuradas correctamente (`Build Command: vite build` o `npm run build`, `Output Directory: dist`).
+    *   **Environment Variables (¡MUY IMPORTANTE!):** Aquí es donde pones tu clave de la API de Gemini de forma segura.
+        *   Expande la sección **"Environment Variables"**.
+        *   Añade una nueva variable:
+            *   **Name:** `API_KEY`
+            *   **Value:** Pega aquí tu clave secreta de la API de Google Gemini.
+        *   Haz clic en **"Add"**.
+
+4.  **¡Despliega!**
+    *   Haz clic en el botón **"Deploy"**.
+    *   Vercel ahora tomará tu código de GitHub, ejecutará el comando `npm run build` e implementará los resultados de la carpeta `dist` en su red global.
+
+Verás una pantalla con el progreso de la compilación y el despliegue. En uno o dos minutos, ¡tendrás fuegos artificiales y un enlace a tu aplicación en vivo!
+
+¡Y eso es todo! Tu aplicación "Luz y Verdad" ahora está disponible para todo el mundo. Cada vez que hagas un cambio en tu código y lo subas a la rama `main` de GitHub, Vercel lo redesplegará automáticamente. ¡Felicidades!
